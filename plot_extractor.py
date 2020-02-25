@@ -3,6 +3,7 @@
 # %%
 #%matplotlib notebook #this magic method lets us work with the graph
 import matplotlib.pyplot as plt
+import os.path as osp
 import numpy as np
 import pandas as pd
 import general_output_handling as goh
@@ -14,10 +15,13 @@ def file_opener(file): #open the IR file for reading
     file_to_open = open(file, "r") 
     information = file_to_open.readlines()
     file_to_open.close() #it has to be closed
-    name_extract = file.split(".")
-    name = name_extract[0]
-    return information, name
+    
+    return information
 
+def get_name(output_file):
+    name_extract = output_file.split(".")
+    name = name_extract[0]
+    return name
 
 def info_extract(information,choice):
     if choice == 0: #UV_vis extract
@@ -80,23 +84,17 @@ def x_sweep(starting_x,ending_x,space_between_numbers):
     return x_values
 
 def y_function(x_extracted,y_extracted,x_sweep,signal_width,starting_x,ending_x,choice):
-    new_x = []
-    new_y = []
-    for value in range(len(x_extracted)):
-        if x_extracted[value] > starting_x and x_extracted[value] < ending_x:
-            new_x.append(x_extracted[value])
-            new_y.append(y_extracted[value])
     
     y_values = np.zeros(len(x_sweep))
 
     
-    for y_value in range(len(new_y)):
+    for y_value in range(len(y_extracted)):
         y_value_index = 0
         for x_value in range(len(x_sweep)):
             if choice == 0: #gaussian
-                y_values[y_value_index] = new_y[y_value]*np.exp(-1*(np.log(2)*((x_sweep[x_value] - new_x[y_value])/signal_width)**2)) + y_values[y_value_index]
+                y_values[y_value_index] = y_extracted[y_value]*np.exp(-1*(np.log(2)*((x_sweep[x_value] - x_extracted[y_value])/signal_width)**2)) + y_values[y_value_index]
             elif choice == 1: #lorentzian
-                y_values[y_value_index] = new_y[y_value]/(1+((x_sweep[x_value] - new_x[y_value])/signal_width)**2) + y_values[y_value_index]
+                y_values[y_value_index] = y_extracted[y_value]/(1+((x_sweep[x_value] - x_extracted[y_value])/signal_width)**2) + y_values[y_value_index]
             #print(f'x {x_sweep[x_value]} y {y_values[y_value_index]}')
             y_value_index += 1
         
@@ -119,15 +117,17 @@ def merge_y(y_values):
 
 # %%
 #parameters
+check_files = 0 # calls the output checker 0 = no 1 = yes
 merge_y_n = 0
 IR_or_UV = 0 #uv_vis = 0 IR = 1 
 G_or_L = 0 #gaussian = 0 lorentzian = 1
-signal_width = 3
+signal_width = 20
 space_between_numbers = 0.3
 starting_x = 190
 ending_x = 800
 #because we in this case we want to compare the tautomeric forms of a molecule we extract the info from bothh outputs and then just plor the information
-files = ["N117.out","N119.out","N120.out","N121.out","N122.out","N123.out","N53.out","N54.out","N55.out","N56.out","N59.out","N60.out"]
+patho = "/home/"
+files = ["N117.out","N119.out"]#,"N120.out","N121.out","N122.out","N123.out","N53.out","N54.out","N55.out","N56.out","N59.out","N60.out"]
 file_names = []
 total_name = "default"
 max_x_per_file = []
@@ -135,9 +135,15 @@ max_y_per_file = []
 x_values = []
 y_values = []
 for file in range(len(files)):
-    goh.output_handle(files[file])
-    info, name = file_opener(files[file])
+    working_file = osp.join(patho,files[file])
+    name = get_name(files[file])
     file_names.append(name)
+
+    if check_files == 1:
+        goh.output_handle(working_file)
+    
+    info = file_opener(working_file)
+    
     
     neg_freq,max_x, max_y = info_extract(info,IR_or_UV)
     max_x_per_file.append(max_x)
@@ -154,6 +160,8 @@ for file in range(len(files)):
 
 if len(files) != 1:
     total_name = merge_names(file_names)
+elif len(files) == 1:
+    total_name = name
     
 if merge_y_n == 1:    
     y_values.append(merge_y(y_values))
@@ -164,7 +172,7 @@ py_y_values = np.array(y_values)
 
 data_columns = py_y_values.transpose()
 df = pd.DataFrame(data=data_columns,index=x_values,columns=file_names)
-df.to_csv(total_name+".csv",encoding='utf-8',)
+df.to_csv(osp.join(patho,total_name+".csv"),encoding='utf-8',)
 
 df
 df.plot()
