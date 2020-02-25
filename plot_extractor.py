@@ -23,21 +23,21 @@ def info_extract(information,choice):
     if choice == 0: #UV_vis extract
         wavelength = []
         force = [] 
-        stop_counter = 0
+        #stop_counter = 0
         for line in information: #"linenum" tells us which line we are on in the for loop (in order to work we need "enumerate"). "line" is the actual line been read at the momment
             if "Excited State" in line: #search for the word "Excited State" in the file
                 excited_state_split = line.split() #split the line
                 force_extract = excited_state_split[8] # extract the part that contains the force (f=XXX in the file)
                 force.append(float(force_extract[2:8])) #"[2:8]" extracts the number and "float" makes the number a float value
                 wavelength.append(float(excited_state_split[6])) #extract the wavelength (nm) from the splitted line
-                stop_counter = 0
-            elif "->" in line:
-                stop_counter = 0
-            else:
-                stop_counter += 1
+                #stop_counter = 1
+            #elif "->" in line:
+                #stop_counter = 0
+            #else:
+                #stop_counter += 1
 
-            if stop_counter == 6:
-                break
+            #if stop_counter == 6:
+                #break
         #print(wavelength)
         #print(force)
         extracted_x = wavelength
@@ -121,13 +121,13 @@ def merge_y(y_values):
 #parameters
 merge_y_n = 0
 IR_or_UV = 0 #uv_vis = 0 IR = 1 
-G_or_L = 1 #gaussian = 0 lorentzian = 1
+G_or_L = 0 #gaussian = 0 lorentzian = 1
 signal_width = 3
 space_between_numbers = 0.3
-starting_x = 1500
-ending_x = 1700
+starting_x = 190
+ending_x = 800
 #because we in this case we want to compare the tautomeric forms of a molecule we extract the info from bothh outputs and then just plor the information
-files = ["N5.out"]#,"N21.out","N113.out","N114.out","N107.out","N118.out"]
+files = ["N117.out","N119.out","N120.out","N121.out","N122.out","N123.out","N53.out","N54.out","N55.out","N56.out","N59.out","N60.out"]
 file_names = []
 total_name = "default"
 max_x_per_file = []
@@ -164,7 +164,7 @@ py_y_values = np.array(y_values)
 
 data_columns = py_y_values.transpose()
 df = pd.DataFrame(data=data_columns,index=x_values,columns=file_names)
-df.to_csv(total_name,encoding='utf-8',)
+df.to_csv(total_name+".csv",encoding='utf-8',)
 
 df
 df.plot()
